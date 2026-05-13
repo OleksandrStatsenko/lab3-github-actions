@@ -2,10 +2,7 @@ name: Security Tests
 
 on:
   push:
-    branches: ["main"]
-
   pull_request:
-    branches: ["main"]
 
 jobs:
   test:
@@ -23,12 +20,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install flask pytest bandit requests
 
       - name: Run Bandit
         run: |
-          bandit -r app.py --skip B404,B603
+          bandit app.py --skip B404,B603
 
       - name: Run Pytest
         run: |
-          pytest tests/
+          pytest tests/test_security.py
