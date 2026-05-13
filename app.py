@@ -5,11 +5,36 @@ import subprocess
 
 app = Flask(__name__)
 
+# Автоматичне створення БД
+def init_db():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            password TEXT
+        )
+    """)
+
+    cursor.execute("DELETE FROM users")
+
+    cursor.execute(
+        "INSERT INTO users (username, password) VALUES (?, ?)",
+        ("admin", "password")
+    )
+
+    conn.commit()
+    conn.close()
+
+init_db()
+
 @app.route('/')
 def home():
     return "Secure Flask App"
 
-# Захищений login
+# Захист від SQL Injection
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
@@ -19,13 +44,16 @@ def login():
     cursor = conn.cursor()
 
     query = "SELECT * FROM users WHERE username=? AND password=?"
+
     cursor.execute(query, (username, password))
 
     user = cursor.fetchone()
+
     conn.close()
 
     if user:
         return "Вітаємо!"
+
     return "Невірні дані"
 
 # Захист від XSS
@@ -44,8 +72,11 @@ def file():
     if filename not in allowed_files:
         return "Access denied"
 
-    with open(filename, 'r') as f:
-        return f.read()
+    try:
+        with open(filename, 'r') as f:
+            return f.read()
+    except FileNotFoundError:
+        return "File not found"
 
 # Захист від Command Injection
 @app.route('/run')
