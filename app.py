@@ -1,6 +1,6 @@
-from flask import Flask, request, escape
+from flask import Flask, request
+from markupsafe import escape
 import sqlite3
-import os
 import subprocess
 
 app = Flask(__name__)
@@ -52,13 +52,16 @@ def file():
 def run():
     cmd = request.args.get('cmd', '')
 
-    allowed_commands = ['date', 'whoami']
+    allowed_commands = {
+        'date': ['date'],
+        'whoami': ['whoami']
+    }
 
     if cmd not in allowed_commands:
         return "Command not allowed"
 
     result = subprocess.run(
-        [cmd],
+        allowed_commands[cmd],
         capture_output=True,
         text=True
     )
@@ -66,4 +69,4 @@ def run():
     return result.stdout
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
